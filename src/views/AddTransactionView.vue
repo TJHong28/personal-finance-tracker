@@ -6,6 +6,9 @@ import { useRouter } from 'vue-router'
 const store = useFinanceStore()
 const router = useRouter()
 
+// Default to today's date in YYYY-MM-DD format
+const date = ref(new Date().toISOString().split('T')[0])
+
 // Reactive state for form inputs
 const amount = ref<number | null>(null)
 const category = ref('Food')
@@ -27,7 +30,8 @@ const handleSubmit = () => {
     amount: amount.value,
     category: category.value,
     type: type.value,
-    notes: notes.value
+    notes: notes.value,
+    date: date.value 
   })
 
   // 3. Redirect back to Dashboard
@@ -53,6 +57,8 @@ const handleSubmit = () => {
       </div>
 
       <div class="form-group">
+        <label>Date</label>
+        <input v-model="date" type="date" required />
         <label>Amount (RM)</label>
         <input 
           v-model="amount" 
