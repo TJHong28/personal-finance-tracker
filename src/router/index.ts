@@ -7,29 +7,46 @@ const router = createRouter({
     {
       path: '/',
       name: 'login',
-      component: LoginView
+      component: LoginView,
+      // FIX 1: Add this meta tag
+      meta: { hideNavbar: true }
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+      // FIX 2: Add it here too
+      meta: { hideNavbar: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      // lazy-loaded: this generates a separate chunk for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/DashboardView.vue')
     },
     {
       path: '/add',
-      name: 'add-transaction',
+      name: 'add',
       component: () => import('../views/AddTransactionView.vue')
+    },
+    {
+      path: '/edit/:id',
+      name: 'edit',
+      component: () => import('../views/AddTransactionView.vue')
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue')
+    },
+    {
+      path: '/categories',
+      name: 'categories',
+      component: () => import('../views/CategoryManagerView.vue')
     },
     {
       path: '/reports',
       name: 'reports',
       component: () => import('../views/ReportsView.vue')
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('../views/NotFoundView.vue')
     }
   ]
 })

@@ -2,64 +2,81 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 
 export const useFinanceStore = defineStore('finance', () => {
-  // 1. State: Load from LocalStorage if available (Robustness)
+  // --- STATE ---
   const savedData = localStorage.getItem('finance_data')
   const transactions = ref<any[]>(savedData ? JSON.parse(savedData) : [])
   
-  // Load saved budget or default to 2000
   const savedBudget = localStorage.getItem('finance_budget')
   const monthlyBudget = ref(savedBudget ? Number(savedBudget) : 2000)
 
-  // 2. Watchers: Auto-save changes (Persistence)
-  watch(transactions, (newVal) => {
-    localStorage.setItem('finance_data', JSON.stringify(newVal))
-  }, { deep: true })
+  const defaultCategories = ['Food', 'Transport', 'Utilities', 'Entertainment', 'Salary', 'Healthcare', 'Shopping']
+  const savedCats = localStorage.getItem('finance_categories')
+  const categories = ref<string[]>(savedCats ? JSON.parse(savedCats) : defaultCategories)
 
-  watch(monthlyBudget, (newVal) => {
-    localStorage.setItem('finance_budget', String(newVal))
-  })
+  // NEW: Currency Setting (Default MYR)
+  const savedCurrency = localStorage.getItem('finance_currency')
+  const currency = ref(savedCurrency || 'MYR')
 
-  // 3. Getters
-  const totalBalance = computed(() => {
-    return transactions.value.reduce((acc, t) => t.type === 'income' ? acc + t.amount : acc - t.amount, 0)
-  })
+  // --- WATCHERS ---
+  watch(transactions, (val) => localStorage.setItem('finance_data', JSON.stringify(val)), { deep: true })
+  watch(monthlyBudget, (val) => localStorage.setItem('finance_budget', String(val)))
+  watch(categories, (val) => localStorage.setItem('finance_categories', JSON.stringify(val)), { deep: true })
+  
+  // NEW: Save Currency
+  watch(currency, (val) => localStorage.setItem('finance_currency', val))
 
-  const totalExpenses = computed(() => {
-    return transactions.value
-      .filter(t => t.type === 'expense')
-      .reduce((acc, t) => acc + t.amount, 0)
-  })
-
+  // --- GETTERS ---
+  const totalBalance = computed(() => transactions.value.reduce((acc, t) => t.type === 'income' ? acc + t.amount : acc - t.amount, 0))
+  const totalExpenses = computed(() => transactions.value.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
   const isOverBudget = computed(() => totalExpenses.value > monthlyBudget.value)
 
-  // 4. Actions
-  function addTransaction(transaction: any) {
-    transactions.value.push({ 
-      ...transaction, 
-      id: Date.now(), 
-      // If the user provided a date, use it. Otherwise, use today.
-      date: transaction.date || new Date().toISOString() 
-    })
+  // --- ACTIONS ---
+  function addTransaction(t: any) {
+    transactions.value.push({ ...t, id: Date.now(), date: t.date || new Date().toISOString() })
   }
 
-  // Feature 5: Delete Logic
+  function editTransaction(updated: any) {
+    const idx = transactions.value.findIndex(t => t.id === updated.id)
+    if (idx !== -1) transactions.value[idx] = updated
+  }
+
   function removeTransaction(id: number) {
     transactions.value = transactions.value.filter(t => t.id !== id)
   }
 
-  // Feature 6: Dynamic Budget Logic
   function setBudget(amount: number) {
     monthlyBudget.value = amount
   }
 
+  function addCategory(name: string) {
+    if (!categories.value.includes(name)) categories.value.push(name)
+  }
+
+  function deleteCategory(name: string) {
+    categories.value = categories.value.filter(c => c !== name)
+  }
+
+  function updateCategory(oldName: string, newName: string) {
+    const idx = categories.value.indexOf(oldName)
+    if (idx !== -1) {
+      categories.value[idx] = newName
+      transactions.value.forEach(t => { if (t.category === oldName) t.category = newName })
+    }
+  }
+
+  function resetApp() {
+    transactions.value = []
+    monthlyBudget.value = 2000
+    categories.value = defaultCategories
+    currency.value = 'MYR'
+    localStorage.clear()
+  }
+
   return { 
-    transactions, 
-    monthlyBudget, 
-    totalBalance, 
-    totalExpenses, 
-    isOverBudget, 
-    addTransaction,
-    removeTransaction, // Don't forget to export these!
-    setBudget 
+    transactions, monthlyBudget, categories, currency, // Export currency
+    totalBalance, totalExpenses, isOverBudget, 
+    addTransaction, removeTransaction, editTransaction, setBudget,
+    addCategory, deleteCategory, updateCategory,
+    resetApp // Export reset
   }
 })
