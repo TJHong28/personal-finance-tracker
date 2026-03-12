@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth' // 1. Import the store
 
 const router = useRouter()
+const authStore = useAuthStore() // 2. Initialize the store
 
 const handleLogout = () => {
   if (confirm('Are you sure you want to log out?')) {
-    // FIX: Changed from '/login' to '/' because your login page is the root path
-    router.push('/') 
+    // 3. Call the store's logout function instead of just pushing the router
+    authStore.logout() 
   }
 }
 </script>

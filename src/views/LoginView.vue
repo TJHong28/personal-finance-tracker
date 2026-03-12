@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth' // 1. Import the auth store
 
 const router = useRouter()
+const authStore = useAuthStore() // 2. Initialize the store
+
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
@@ -24,10 +27,23 @@ const handleLogin = () => {
     return
   }
 
-  // 3. Simulate Login
+  // 3. Actual Login via Pinia Store
   isLoading.value = true
+  
+  // Keeping your setTimeout so the "Signing In..." button effect shows
   setTimeout(() => {
-    router.push('/dashboard')
+    // Check credentials against our LocalStorage mock database
+    const result = authStore.login(email.value, password.value)
+    
+    if (result.success) {
+      // Success! Send them to the dashboard
+      router.push('/dashboard')
+    } else {
+      // Failed! Show the error banner (e.g., "Invalid email or password.")
+      errorMessage.value = result.message || 'Login failed. Please try again.'
+    }
+    
+    isLoading.value = false
   }, 1000)
 }
 </script>

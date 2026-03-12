@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth' // 1. Import the auth store
 
 const router = useRouter()
+const authStore = useAuthStore() // 2. Initialize the store
+
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -21,18 +24,31 @@ const handleRegister = () => {
   }
   
   // 3. Validate Password Complexity (Strict Policy)
-  // At least 1 Upper, 1 Lower, 1 Special, Min 6 chars
   const strictPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{6,}$/
   if (!strictPasswordRegex.test(password.value)) {
     errorMessage.value = "Password must have 1 uppercase, 1 lowercase, 1 special character, and be 6+ chars."
     return
   }
 
-  // 4. Simulate API Call
+  // 4. Actual LocalStorage Registration via Pinia
   isLoading.value = true
+  
+  // Keeping your setTimeout so the "Creating Account..." button effect still shows!
   setTimeout(() => {
-    alert("Account created successfully!")
-    router.push('/') // Redirect to Login
+    // Call the register function from our store
+    const result = authStore.register(email.value, password.value)
+    
+    if (result.success) {
+      alert("Account created successfully!")
+      // If your store auto-logs them in, send them to dashboard. 
+      // Otherwise, send them to login '/' as you originally had it.
+      router.push('/dashboard') 
+    } else {
+      // If the email already exists, show the error banner
+      errorMessage.value = result.message || 'Registration failed. Please try again.'
+    }
+    
+    isLoading.value = false
   }, 1000)
 }
 </script>
